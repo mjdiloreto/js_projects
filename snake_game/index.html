@@ -1,0 +1,163 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Snek</title>
+    <style type="text/css">
+
+        body {
+            overflow: hidden;
+            background: #000;
+        }
+
+        canvas {
+            width: 100vw;
+            height: 100vh;
+        }
+
+    </style>
+
+<body>
+
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>-->
+
+<canvas id="myCanvas" width="400" height="400"></canvas>
+<script>
+    'use strict';
+
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+
+    var gridWidth = 20;
+    var gridHeight = 20;
+
+    var grid = [];
+    initGrid(gridWidth, gridHeight);
+
+    var start = 250;
+    var dir = "right";
+
+    var player = [start];
+
+    var food;
+    newFood();
+
+    // Initialize the player as a single square
+    grid[start].isPlayer = true;
+
+    window.addEventListener('keydown', move, false)
+
+    drawGrid();
+
+    function newFood() {
+        food = Math.floor(Math.random() * (gridWidth * gridHeight));
+        if (grid[food].isPlayer) {
+            newFood();
+            return;
+        } else {
+            grid[food].isFood = true;
+        }
+    }
+
+    function initGrid(width, height) {
+        grid = []
+        for (var i = 0; i < width * height; i++) {
+            let cell = {
+                x: i % width,
+                y: Math.floor(i / height) % width,
+                w: 16,
+                h: 16,
+                isPlayer: false,
+                isFood: false
+            };
+            grid.push(cell);
+        }
+    }
+
+    function drawGrid() {
+        for (var i = 0; i < grid.length; i++) {
+            let cell = grid[i]
+            drawCell(cell, context)
+        }
+    }
+
+
+    function update() {
+        let first = player[0];
+        let last = player.pop()
+        grid[last].isPlayer = false;
+        switch (dir) {
+            case "up":
+                var newHead = first - gridWidth;
+                break;
+            case "down":
+                var newHead = first + gridWidth;
+                break;
+            case "left":
+                var newHead = first - 1;
+                break;
+            case "right":
+                var newHead = first + 1;
+                break;
+            default:
+                alert("no such direction " + dir);
+        }
+        if (0 > newHead) {
+            newHead = gridWidth * gridHeight + newHead;
+        } else {
+            newHead = newHead % (gridWidth * gridHeight);
+        }
+        player.unshift(newHead);
+        let newHeadCell = grid[newHead];
+        if (newHeadCell.isPlayer || newHead === last) {
+            console.log("ran into player");
+            alert("game over");
+            player = [start]
+            initGrid(gridWidth, gridHeight);
+            grid[start].isPlayer = true;
+            grid[food].isFood = false;
+            newFood();
+            return;
+        } else if (newHeadCell.isFood) {
+            console.log("collected food");
+            player.push(last);
+            newHeadCell.isFood = false;
+            newFood();
+        }
+        newHeadCell.isPlayer = true;
+        drawGrid();
+    }
+
+    function drawCell(cell, context) {
+        // Back to normal
+        context.fillStyle = "#FFFFFF"
+        if (cell.isPlayer || cell.isFood) {
+            context.fillStyle = "#FF0000";
+        }
+        context.fillRect(cell.x * cell.w, cell.y * cell.h, cell.w, cell.h);
+    }
+
+    function move(e) {
+        let code = e.keyCode;
+        if (code === 37) {  // left arrow
+            dir = "left";
+        }
+        else if (code === 38) {  // up arrow
+            dir = "up";
+        }
+        else if (code === 39) {  // right arrow
+            dir = "right";
+        }
+        else if (code === 40) {  // down arrow
+            dir = "down";
+        } else {
+            console.log("unsupported key " + code);
+            return;
+        }
+        update();
+    }
+
+</script>
+
+</body>
